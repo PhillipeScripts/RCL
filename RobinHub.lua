@@ -1,15 +1,17 @@
--- Robin Hub v6 para Delta Executor (Completo com Cores Personalizadas)
+-- Robin Hub v13 (Com Contador de FPS para Delta Executor)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local CoreGui = game:GetService("CoreGui")
 local UserInputService = game:GetService("UserInputService")
 
 local player = Players.LocalPlayer
+
 local noclipEnabled = false
 local flyEnabled = false
 local godModeEnabled = false
 local killAuraEnabled = false
 local infiniteJumpEnabled = false
+local antiPushEnabled = false
 local customSpeed = 16
 local hubVisible = true
 local isExpanded = true
@@ -17,333 +19,256 @@ local isExpanded = true
 local bv, bg
 local protegido = gethui or function(v) return v end
 
--- Cores dos botões
 local colorOff = Color3.fromRGB(160, 40, 40) -- Vermelho
 local colorOn = Color3.fromRGB(46, 204, 113)  -- Verde
 
--- Remove interface antiga se já existir
+-- Sistema Anti-Duplicado
 if CoreGui:FindFirstChild("RobinHub_Delta") then
     CoreGui:FindFirstChild("RobinHub_Delta"):Destroy()
 end
+if player.PlayerGui:FindFirstChild("RobinHub_Delta") then
+    player.PlayerGui:FindFirstChild("RobinHub_Delta"):Destroy()
+end
 
--- Criação da Interface Principal
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "RobinHub_Delta"
-screenGui.Parent = protegido(CoreGui)
+local success = pcall(function()
+    screenGui.Parent = protegido(CoreGui)
+end)
+if not success then
+    screenGui.Parent = player:WaitForChild("PlayerGui")
+end
 screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+screenGui.ResetOnSpawn = false
 
--- Botão Flutuante (Abre e Fecha o Hub na tela)
-local toggleHubButton = Instance.new("TextButton")
-toggleHubButton.Size = UDim2.new(0, 160, 0, 42)
+-- Botão Flutuante Principal
+local toggleHubButton = Instance.new("TextButton", screenGui)
+toggleHubButton.Size = UDim2.new(0, 130, 0, 36)
 toggleHubButton.Position = UDim2.new(0.05, 0, 0.05, 0)
 toggleHubButton.Text = "🦇 ROBIN HUB"
 toggleHubButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-toggleHubButton.TextSize = 13
+toggleHubButton.TextSize = 12
 toggleHubButton.Font = Enum.Font.GothamBold
 toggleHubButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
 toggleHubButton.Active = true
 toggleHubButton.Draggable = true
-toggleHubButton.Parent = screenGui
+Instance.new("UICorner", toggleHubButton).CornerRadius = UDim.new(0, 8)
+local tStroke = Instance.new("UIStroke", toggleHubButton)
+tStroke.Color = Color3.fromRGB(80, 80, 80)
+tStroke.Thickness = 1.5
 
-local toggleCorner = Instance.new("UICorner")
-toggleCorner.CornerRadius = UDim.new(0, 10)
-toggleCorner.Parent = toggleHubButton
-
-local toggleStroke = Instance.new("UIStroke")
-toggleStroke.Color = Color3.fromRGB(80, 80, 80)
-toggleStroke.Thickness = 1.5
-toggleStroke.Parent = toggleHubButton
-
--- Janela Principal (Painel Preto Grande e Expandido)
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 460, 0, 570)
-mainFrame.Position = UDim2.new(0.5, -230, 0.4, -285)
+-- Janela Principal
+local mainFrame = Instance.new("Frame", screenGui)
+mainFrame.Size = UDim2.new(0, 380, 0, 480)
+mainFrame.Position = UDim2.new(0.5, -190, 0.4, -240)
 mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 mainFrame.BorderSizePixel = 0
 mainFrame.Active = true
 mainFrame.Draggable = true
-mainFrame.Parent = screenGui
+Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 14)
+local mStroke = Instance.new("UIStroke", mainFrame)
+mStroke.Color = Color3.fromRGB(60, 60, 60)
+mStroke.Thickness = 2
 
-local mainCorner = Instance.new("UICorner")
-mainCorner.CornerRadius = UDim.new(0, 18)
-mainCorner.Parent = mainFrame
-
-local mainStroke = Instance.new("UIStroke")
-mainStroke.Color = Color3.fromRGB(60, 60, 60)
-mainStroke.Thickness = 2.5
-mainStroke.Parent = mainFrame
-
--- Barra Superior (Título + Capa de Anime)
-local topBar = Instance.new("Frame")
-topBar.Size = UDim2.new(1, 0, 0, 55)
+-- Barra Superior
+local topBar = Instance.new("Frame", mainFrame)
+topBar.Size = UDim2.new(1, 0, 0, 42)
 topBar.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 topBar.BorderSizePixel = 0
-topBar.Parent = mainFrame
+Instance.new("UICorner", topBar).CornerRadius = UDim.new(0, 14)
 
-local topCorner = Instance.new("UICorner")
-topCorner.CornerRadius = UDim.new(0, 18)
-topCorner.Parent = topBar
-
-local coverFix = Instance.new("Frame")
-coverFix.Size = UDim2.new(1, 0, 0, 15)
-coverFix.Position = UDim2.new(0, 0, 1, -15)
+local coverFix = Instance.new("Frame", topBar)
+coverFix.Size = UDim2.new(1, 0, 0, 10)
+coverFix.Position = UDim2.new(0, 0, 1, -10)
 coverFix.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 coverFix.BorderSizePixel = 0
-coverFix.Parent = topBar
 
--- Foto / Ícone de Anime na Capa
-local animeIcon = Instance.new("ImageLabel")
-animeIcon.Size = UDim2.new(0, 40, 0, 40)
-animeIcon.Position = UDim2.new(0, 10, 0.5, -20)
+local animeIcon = Instance.new("ImageLabel", topBar)
+animeIcon.Size = UDim2.new(0, 28, 0, 28)
+animeIcon.Position = UDim2.new(0, 8, 0.5, -14)
 animeIcon.Image = "rbxassetid://6034229566"
 animeIcon.BackgroundTransparency = 1
-animeIcon.Parent = topBar
 
-local titleLabel = Instance.new("TextLabel")
-titleLabel.Size = UDim2.new(1, -130, 1, 0)
-titleLabel.Position = UDim2.new(0, 60, 0, 0)
-titleLabel.Text = "🦇 ROBIN HUB v6"
+local titleLabel = Instance.new("TextLabel", topBar)
+titleLabel.Size = UDim2.new(1, -135, 1, 0)
+titleLabel.Position = UDim2.new(0, 44, 0, 0)
+titleLabel.Text = "🦇 ROBIN HUB"
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-titleLabel.TextSize = 16
+titleLabel.TextSize = 13
 titleLabel.Font = Enum.Font.GothamBold
 titleLabel.TextXAlignment = Enum.TextXAlignment.Left
 titleLabel.BackgroundTransparency = 1
-titleLabel.Parent = topBar
 
--- Botão de Redimensionar no Canto da Barra Superior ([ ])
-local resizeButton = Instance.new("TextButton")
-resizeButton.Size = UDim2.new(0, 32, 0, 32)
-resizeButton.Position = UDim2.new(1, -80, 0.5, -16)
+-- Mostrador de FPS na Barra Superior
+local fpsLabel = Instance.new("TextLabel", topBar)
+fpsLabel.Size = UDim2.new(0, 45, 0, 26)
+fpsLabel.Position = UDim2.new(1, -114, 0.5, -13)
+fpsLabel.Text = "FPS: 60"
+fpsLabel.TextColor3 = Color3.fromRGB(46, 204, 113)
+fpsLabel.TextSize = 10
+fpsLabel.Font = Enum.Font.GothamBold
+fpsLabel.BackgroundTransparency = 1
+fpsLabel.TextXAlignment = Enum.TextXAlignment.Center
+
+-- Botão Minimizar ([ ])
+local resizeButton = Instance.new("TextButton", topBar)
+resizeButton.Size = UDim2.new(0, 26, 0, 26)
+resizeButton.Position = UDim2.new(1, -66, 0.5, -13)
 resizeButton.Text = "[ ]"
 resizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-resizeButton.TextSize = 13
+resizeButton.TextSize = 11
 resizeButton.Font = Enum.Font.GothamBold
 resizeButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-resizeButton.Parent = topBar
+Instance.new("UICorner", resizeButton).CornerRadius = UDim.new(0, 6)
 
-local resizeCorner = Instance.new("UICorner")
-resizeCorner.CornerRadius = UDim.new(0, 8)
-resizeCorner.Parent = resizeButton
-
--- Botão de Fechar (X)
-local closeButton = Instance.new("TextButton")
-closeButton.Size = UDim2.new(0, 32, 0, 32)
-closeButton.Position = UDim2.new(1, -42, 0.5, -16)
+-- Botão Fechar (X)
+local closeButton = Instance.new("TextButton", topBar)
+closeButton.Size = UDim2.new(0, 26, 0, 26)
+closeButton.Position = UDim2.new(1, -34, 0.5, -13)
 closeButton.Text = "✕"
 closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-closeButton.TextSize = 16
+closeButton.TextSize = 13
 closeButton.Font = Enum.Font.GothamBold
 closeButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-closeButton.Parent = topBar
-
-local closeCorner = Instance.new("UICorner")
-closeCorner.CornerRadius = UDim.new(0, 8)
-closeCorner.Parent = closeButton
+Instance.new("UICorner", closeButton).CornerRadius = UDim.new(0, 6)
 
 closeButton.MouseButton1Click:Connect(function()
     screenGui:Destroy()
 end)
 
--- Lógica do Botão de Redimensionar
 resizeButton.MouseButton1Click:Connect(function()
     isExpanded = not isExpanded
     if isExpanded then
-        mainFrame.Size = UDim2.new(0, 460, 0, 570)
+        mainFrame.Size = UDim2.new(0, 380, 0, 480)
         resizeButton.Text = "[ ]"
     else
-        mainFrame.Size = UDim2.new(0, 460, 0, 55)
+        mainFrame.Size = UDim2.new(0, 380, 0, 42)
         resizeButton.Text = "[+]"
     end
 end)
 
--- Lógica para Abrir e Fechar o Hub Principal
 toggleHubButton.MouseButton1Click:Connect(function()
     hubVisible = not hubVisible
     mainFrame.Visible = hubVisible
-    if hubVisible then
-        toggleHubButton.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-        toggleHubButton.Text = "🦇 ROBIN HUB"
-    else
-        toggleHubButton.BackgroundColor3 = Color3.fromRGB(120, 30, 30)
-        toggleHubButton.Text = "🔴 HUB FECHADO"
+end)
+
+-- Atualização em tempo real do FPS
+local lastTick = tick()
+local frameCount = 0
+RunService.RenderStepped:Connect(function()
+    frameCount = frameCount + 1
+    local currentTick = tick()
+    if currentTick - lastTick >= 1 then
+        fpsLabel.Text = "FPS: " .. math.floor(frameCount / (currentTick - lastTick))
+        frameCount = 0
+        lastTick = currentTick
     end
 end)
 
--- Posições para o Grid de botões (2 colunas)
-local leftColX = UDim2.new(0, 20, 0, 68)
-local rightColX = UDim2.new(0, 235, 0, 68)
-local elementSize = UDim2.new(0, 205, 0, 40)
+-- Grid de Botões
+local leftColX = UDim2.new(0, 12, 0, 52)
+local rightColX = UDim2.new(0, 196, 0, 52)
+local elementSize = UDim2.new(0, 172, 0, 32)
+local yStep = 38
 
--- Botão 1: Voo ON/OFF
-local flyButton = Instance.new("TextButton")
-flyButton.Size = elementSize
-flyButton.Position = leftColX
-flyButton.Text = "VOO: OFF"
-flyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-flyButton.TextSize = 13
-flyButton.Font = Enum.Font.GothamBold
-flyButton.BackgroundColor3 = colorOff
-flyButton.Parent = mainFrame
+local flyButton = Instance.new("TextButton", mainFrame)
+flyButton.Size = elementSize; flyButton.Position = leftColX
+flyButton.Text = "VOO: OFF"; flyButton.TextColor3 = Color3.fromRGB(255, 255, 255); flyButton.TextSize = 11; flyButton.Font = Enum.Font.GothamBold; flyButton.BackgroundColor3 = colorOff
+Instance.new("UICorner", flyButton).CornerRadius = UDim.new(0, 8)
 
-local flyCorner = Instance.new("UICorner")
-flyCorner.CornerRadius = UDim.new(0, 10)
-flyCorner.Parent = flyButton
+local noclipButton = Instance.new("TextButton", mainFrame)
+noclipButton.Size = elementSize; noclipButton.Position = rightColX
+noclipButton.Text = "NOCLIP: OFF"; noclipButton.TextColor3 = Color3.fromRGB(255, 255, 255); noclipButton.TextSize = 11; noclipButton.Font = Enum.Font.GothamBold; noclipButton.BackgroundColor3 = colorOff
+Instance.new("UICorner", noclipButton).CornerRadius = UDim.new(0, 8)
 
--- Botão 2: Noclip ON/OFF
-local noclipButton = Instance.new("TextButton")
-noclipButton.Size = elementSize
-noclipButton.Position = rightColX
-noclipButton.Text = "NOCLIP: OFF"
-noclipButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-noclipButton.TextSize = 13
-noclipButton.Font = Enum.Font.GothamBold
-noclipButton.BackgroundColor3 = colorOff
-noclipButton.Parent = mainFrame
+local godButton = Instance.new("TextButton", mainFrame)
+godButton.Size = elementSize; godButton.Position = UDim2.new(0, 12, 0, 52 + yStep)
+godButton.Text = "GOD MODE: OFF"; godButton.TextColor3 = Color3.fromRGB(255, 255, 255); godButton.TextSize = 11; godButton.Font = Enum.Font.GothamBold; godButton.BackgroundColor3 = colorOff
+Instance.new("UICorner", godButton).CornerRadius = UDim.new(0, 8)
 
-local noclipCorner = Instance.new("UICorner")
-noclipCorner.CornerRadius = UDim.new(0, 10)
-noclipCorner.Parent = noclipButton
+local killAuraButton = Instance.new("TextButton", mainFrame)
+killAuraButton.Size = elementSize; killAuraButton.Position = UDim2.new(0, 196, 0, 52 + yStep)
+killAuraButton.Text = "KILL AURA: OFF"; killAuraButton.TextColor3 = Color3.fromRGB(255, 255, 255); killAuraButton.TextSize = 11; killAuraButton.Font = Enum.Font.GothamBold; killAuraButton.BackgroundColor3 = colorOff
+Instance.new("UICorner", killAuraButton).CornerRadius = UDim.new(0, 8)
 
--- Botão 3: God Mode ON/OFF
-local godButton = Instance.new("TextButton")
-godButton.Size = elementSize
-godButton.Position = UDim2.new(0, 20, 0, 114)
-godButton.Text = "GOD MODE: OFF"
-godButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-godButton.TextSize = 13
-godButton.Font = Enum.Font.GothamBold
-godButton.BackgroundColor3 = colorOff
-godButton.Parent = mainFrame
+local infJumpButton = Instance.new("TextButton", mainFrame)
+infJumpButton.Size = elementSize; infJumpButton.Position = UDim2.new(0, 12, 0, 52 + (yStep * 2))
+infJumpButton.Text = "PULO INFINITO: OFF"; infJumpButton.TextColor3 = Color3.fromRGB(255, 255, 255); infJumpButton.TextSize = 11; infJumpButton.Font = Enum.Font.GothamBold; infJumpButton.BackgroundColor3 = colorOff
+Instance.new("UICorner", infJumpButton).CornerRadius = UDim.new(0, 8)
 
-local godCorner = Instance.new("UICorner")
-godCorner.CornerRadius = UDim.new(0, 10)
-godCorner.Parent = godButton
+local antiPushButton = Instance.new("TextButton", mainFrame)
+antiPushButton.Size = elementSize; antiPushButton.Position = UDim2.new(0, 196, 0, 52 + (yStep * 2))
+antiPushButton.Text = "ANTI-EMPURRÃO: OFF"; antiPushButton.TextColor3 = Color3.fromRGB(255, 255, 255); antiPushButton.TextSize = 10; antiPushButton.Font = Enum.Font.GothamBold; antiPushButton.BackgroundColor3 = colorOff
+Instance.new("UICorner", antiPushButton).CornerRadius = UDim.new(0, 8)
 
--- Botão 4: Kill Aura ON/OFF
-local killAuraButton = Instance.new("TextButton")
-killAuraButton.Size = elementSize
-killAuraButton.Position = UDim2.new(0, 235, 0, 114)
-killAuraButton.Text = "KILL AURA: OFF"
-killAuraButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-killAuraButton.TextSize = 13
-killAuraButton.Font = Enum.Font.GothamBold
-killAuraButton.BackgroundColor3 = colorOff
-killAuraButton.Parent = mainFrame
+local getToolButton = Instance.new("TextButton", mainFrame)
+getToolButton.Size = elementSize; getToolButton.Position = UDim2.new(0, 12, 0, 52 + (yStep * 3))
+getToolButton.Text = "⚔️ PEGAR EQUIP."; getToolButton.TextColor3 = Color3.fromRGB(255, 255, 255); getToolButton.TextSize = 11; getToolButton.Font = Enum.Font.GothamBold; getToolButton.BackgroundColor3 = colorOff
+Instance.new("UICorner", getToolButton).CornerRadius = UDim.new(0, 8)
 
-local killCorner = Instance.new("UICorner")
-killCorner.CornerRadius = UDim.new(0, 10)
-killCorner.Parent = killAuraButton
+local speedBox = Instance.new("TextBox", mainFrame)
+speedBox.Size = elementSize; speedBox.Position = UDim2.new(0, 196, 0, 52 + (yStep * 3))
+speedBox.Text = "50"; speedBox.PlaceholderText = "Vel (1-1000)"; speedBox.TextColor3 = Color3.fromRGB(255, 255, 255); speedBox.TextSize = 11; speedBox.Font = Enum.Font.GothamBold; speedBox.BackgroundColor3 = Color3.fromRGB(25, 25, 25); speedBox.ClearTextOnFocus = false
+Instance.new("UICorner", speedBox).CornerRadius = UDim.new(0, 8)
 
--- Botão 5: Pulo Infinito ON/OFF
-local infJumpButton = Instance.new("TextButton")
-infJumpButton.Size = elementSize
-infJumpButton.Position = UDim2.new(0, 20, 0, 160)
-infJumpButton.Text = "PULO INFINITO: OFF"
-infJumpButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-infJumpButton.TextSize = 13
-infJumpButton.Font = Enum.Font.GothamBold
-infJumpButton.BackgroundColor3 = colorOff
-infJumpButton.Parent = mainFrame
+local speedButton = Instance.new("TextButton", mainFrame)
+speedButton.Size = elementSize; speedButton.Position = UDim2.new(0, 12, 0, 52 + (yStep * 4))
+speedButton.Text = "LIGAR VELOCIDADE"; speedButton.TextColor3 = Color3.fromRGB(255, 255, 255); speedButton.TextSize = 11; speedButton.Font = Enum.Font.GothamBold; speedButton.BackgroundColor3 = colorOff
+Instance.new("UICorner", speedButton).CornerRadius = UDim.new(0, 8)
 
-local jumpCorner = Instance.new("UICorner")
-jumpCorner.CornerRadius = UDim.new(0, 10)
-jumpCorner.Parent = infJumpButton
+local offSpeedButton = Instance.new("TextButton", mainFrame)
+offSpeedButton.Size = elementSize; offSpeedButton.Position = UDim2.new(0, 196, 0, 52 + (yStep * 4))
+offSpeedButton.Text = "DESLIGAR VELOCIDADE"; offSpeedButton.TextColor3 = Color3.fromRGB(255, 255, 255); offSpeedButton.TextSize = 10; offSpeedButton.Font = Enum.Font.GothamBold; offSpeedButton.BackgroundColor3 = colorOff
+Instance.new("UICorner", offSpeedButton).CornerRadius = UDim.new(0, 8)
 
--- Botão 6: Pegar Arma/Espada/Equipamento
-local getToolButton = Instance.new("TextButton")
-getToolButton.Size = elementSize
-getToolButton.Position = UDim2.new(0, 235, 0, 160)
-getToolButton.Text = "⚔️ PEGAR EQUIPAMENTO"
-getToolButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-getToolButton.TextSize = 12
-getToolButton.Font = Enum.Font.GothamBold
-getToolButton.BackgroundColor3 = colorOff
-getToolButton.Parent = mainFrame
-
-local toolCorner = Instance.new("UICorner")
-toolCorner.CornerRadius = UDim.new(0, 10)
-toolCorner.Parent = getToolButton
-
--- Caixa de Texto: Velocidade (1 a 1000)
-local speedBox = Instance.new("TextBox")
-speedBox.Size = elementSize
-speedBox.Position = UDim2.new(0, 20, 0, 206)
-speedBox.Text = "50"
-speedBox.PlaceholderText = "Vel (1-1000)"
-speedBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-speedBox.TextSize = 13
-speedBox.Font = Enum.Font.GothamBold
-speedBox.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-speedBox.ClearTextOnFocus = false
-speedBox.Parent = mainFrame
-
-local speedCorner = Instance.new("UICorner")
-speedCorner.CornerRadius = UDim.new(0, 10)
-speedCorner.Parent = speedBox
-
--- Botão 7: Ativar Velocidade
-local speedButton = Instance.new("TextButton")
-speedButton.Size = elementSize
-speedButton.Position = UDim2.new(0, 235, 0, 206)
-speedButton.Text = "ATIVAR VELOCIDADE"
-speedButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-speedButton.TextSize = 13
-speedButton.Font = Enum.Font.GothamBold
-speedButton.BackgroundColor3 = colorOff
-speedButton.Parent = mainFrame
-
-local speedBtnCorner = Instance.new("UICorner")
-speedBtnCorner.CornerRadius = UDim.new(0, 10)
-speedBtnCorner.Parent = speedButton
-
--- Botão 8: Desligar Velocidade (Volta ao normal = 16)
-local offSpeedButton = Instance.new("TextButton")
-offSpeedButton.Size = UDim2.new(0, 420, 0, 40)
-offSpeedButton.Position = UDim2.new(0, 20, 0, 256)
-offSpeedButton.Text = "DESLIGAR VELOCIDADE"
-offSpeedButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-offSpeedButton.TextSize = 13
-offSpeedButton.Font = Enum.Font.GothamBold
-offSpeedButton.BackgroundColor3 = colorOff
-offSpeedButton.Parent = mainFrame
-
-local offSpeedCorner = Instance.new("UICorner")
-offSpeedCorner.CornerRadius = UDim.new(0, 10)
-offSpeedCorner.Parent = offSpeedButton
-
--- Rótulo de Status
-local statusLabel = Instance.new("TextLabel")
-statusLabel.Size = UDim2.new(0, 420, 0, 35)
-statusLabel.Position = UDim2.new(0, 20, 0, 306)
-statusLabel.Text = "Status: Robin Hub v6 ativo."
+local statusLabel = Instance.new("TextLabel", mainFrame)
+statusLabel.Size = UDim2.new(0, 356, 0, 25); statusLabel.Position = UDim2.new(0, 12, 0, 52 + (yStep * 5) + 4)
+statusLabel.Text = "Status: Robin Hub v13 ativo."
 statusLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
-statusLabel.TextSize = 12
+statusLabel.TextSize = 11
 statusLabel.Font = Enum.Font.GothamMedium
 statusLabel.BackgroundTransparency = 1
-statusLabel.Parent = mainFrame
 
--- Lógica da Velocidade
+-- Lógica do Anti-Empurrão
+antiPushButton.MouseButton1Click:Connect(function()
+    antiPushEnabled = not antiPushEnabled
+    antiPushButton.Text = antiPushEnabled and "ANTI-EMPURRÃO: ON" or "ANTI-EMPURRÃO: OFF"
+    antiPushButton.BackgroundColor3 = antiPushEnabled and colorOn or colorOff
+end)
+
+RunService.Stepped:Connect(function()
+    if antiPushEnabled and player.Character then
+        for _, part in ipairs(player.Character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                for _, otherPlayer in ipairs(Players:GetPlayers()) do
+                    if otherPlayer ~= player and otherPlayer.Character then
+                        for _, otherPart in ipairs(otherPlayer.Character:GetDescendants()) do
+                            if otherPart:IsA("BasePart") then
+                                pcall(function()
+                                    part.CanCollide = false
+                                end)
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+end)
+
+-- Lógica de Velocidade
 speedBox.FocusLost:Connect(function()
     local num = tonumber(speedBox.Text)
-    if num then
-        customSpeed = math.clamp(num, 1, 1000)
-        speedBox.Text = tostring(customSpeed)
-    else
-        speedBox.Text = tostring(customSpeed)
-    end
+    if num then customSpeed = math.clamp(num, 1, 1000) end
 end)
 
 speedButton.MouseButton1Click:Connect(function()
     local num = tonumber(speedBox.Text)
-    if num then
-        customSpeed = math.clamp(num, 1, 1000)
-    end
+    if num then customSpeed = math.clamp(num, 1, 1000) end
     if player.Character and player.Character:FindFirstChild("Humanoid") then
         player.Character.Humanoid.WalkSpeed = customSpeed
         speedButton.BackgroundColor3 = colorOn
         statusLabel.Text = "Velocidade ativada: " .. customSpeed
-    else
-        statusLabel.Text = "Personagem não encontrado!"
     end
 end)
 
@@ -352,39 +277,29 @@ offSpeedButton.MouseButton1Click:Connect(function()
         player.Character.Humanoid.WalkSpeed = 16
         speedButton.BackgroundColor3 = colorOff
         statusLabel.Text = "Velocidade desligada (Padrão: 16)"
-    else
-        statusLabel.Text = "Personagem não encontrado!"
     end
 end)
 
--- Lógica para Pegar Ferramenta / Arma / Espada no Mapa
+-- Coletor de Armas
 getToolButton.MouseButton1Click:Connect(function()
-    local found = false
     pcall(function()
         for _, obj in ipairs(workspace:GetDescendants()) do
             if obj:IsA("Tool") and obj.Parent ~= player.Character and not obj.Parent:IsA("Backpack") then
                 obj.Parent = player.Backpack
-                found = true
-                statusLabel.Text = "Equipamento encontrado e coletado!"
+                getToolButton.BackgroundColor3 = colorOn
+                statusLabel.Text = "Equipamento coletado!"
+                task.delay(1, function() getToolButton.BackgroundColor3 = colorOff end)
                 break
             end
-        end
-        if not found then
-            statusLabel.Text = "Nenhuma ferramenta nova encontrada."
         end
     end)
 end)
 
--- Lógica do Noclip
+-- Noclip
 noclipButton.MouseButton1Click:Connect(function()
     noclipEnabled = not noclipEnabled
-    if noclipEnabled then
-        noclipButton.Text = "NOCLIP: ON"
-        noclipButton.BackgroundColor3 = colorOn
-    else
-        noclipButton.Text = "NOCLIP: OFF"
-        noclipButton.BackgroundColor3 = colorOff
-    end
+    noclipButton.Text = noclipEnabled and "NOCLIP: ON" or "NOCLIP: OFF"
+    noclipButton.BackgroundColor3 = noclipEnabled and colorOn or colorOff
 end)
 
 RunService.Stepped:Connect(function()
@@ -397,18 +312,11 @@ RunService.Stepped:Connect(function()
     end
 end)
 
--- Lógica do Pulo Infinito
+-- Pulo Infinito
 infJumpButton.MouseButton1Click:Connect(function()
     infiniteJumpEnabled = not infiniteJumpEnabled
-    if infiniteJumpEnabled then
-        infJumpButton.Text = "PULO INFINITO: ON"
-        infJumpButton.BackgroundColor3 = colorOn
-        statusLabel.Text = "Pulo infinito ativado!"
-    else
-        infJumpButton.Text = "PULO INFINITO: OFF"
-        infJumpButton.BackgroundColor3 = colorOff
-        statusLabel.Text = "Pulo infinito desativado."
-    end
+    infJumpButton.Text = infiniteJumpEnabled and "PULO INFINITO: ON" or "PULO INFINITO: OFF"
+    infJumpButton.BackgroundColor3 = infiniteJumpEnabled and colorOn or colorOff
 end)
 
 UserInputService.JumpRequest:Connect(function()
@@ -417,18 +325,11 @@ UserInputService.JumpRequest:Connect(function()
     end
 end)
 
--- Lógica do God Mode
+-- God Mode
 godButton.MouseButton1Click:Connect(function()
     godModeEnabled = not godModeEnabled
-    if godModeEnabled then
-        godButton.Text = "GOD MODE: ON"
-        godButton.BackgroundColor3 = colorOn
-        statusLabel.Text = "God Mode ativado!"
-    else
-        godButton.Text = "GOD MODE: OFF"
-        godButton.BackgroundColor3 = colorOff
-        statusLabel.Text = "God Mode desativado."
-    end
+    godButton.Text = godModeEnabled and "GOD MODE: ON" or "GOD MODE: OFF"
+    godButton.BackgroundColor3 = godModeEnabled and colorOn or colorOff
 end)
 
 RunService.Heartbeat:Connect(function()
@@ -439,14 +340,13 @@ RunService.Heartbeat:Connect(function()
     end
 end)
 
--- Lógica do Kill Aura
+-- Kill Aura
 killAuraButton.MouseButton1Click:Connect(function()
     killAuraEnabled = not killAuraEnabled
+    killAuraButton.Text = killAuraEnabled and "KILL AURA: ON" or "KILL AURA: OFF"
+    killAuraButton.BackgroundColor3 = killAuraEnabled and colorOn or colorOff
+    
     if killAuraEnabled then
-        killAuraButton.Text = "KILL AURA: ON"
-        killAuraButton.BackgroundColor3 = colorOn
-        statusLabel.Text = "Kill Aura ativado!"
-        
         task.spawn(function()
             while killAuraEnabled do
                 task.wait(0.2)
@@ -454,20 +354,15 @@ killAuraButton.MouseButton1Click:Connect(function()
                     if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
                         local myRoot = player.Character.HumanoidRootPart
                         local tool = player.Character:FindFirstChildOfClass("Tool")
-                        
-                        for _, otherPlayer in ipairs(Players:GetPlayers()) do
-                            if otherPlayer ~= player and otherPlayer.Character then
-                                local targetRoot = otherPlayer.Character:FindFirstChild("HumanoidRootPart")
-                                local targetHumanoid = otherPlayer.Character:FindFirstChild("Humanoid")
-                                
-                                if targetRoot and targetHumanoid and targetHumanoid.Health > 0 then
-                                    local distance = (myRoot.Position - targetRoot.Position).Magnitude
-                                    if distance <= 20 then
-                                        if tool then
-                                            tool:Activate()
-                                        end
-                                        firetouchinterest(myRoot, targetRoot, 0)
-                                        firetouchinterest(myRoot, targetRoot, 1)
+                        for _, p in ipairs(Players:GetPlayers()) do
+                            if p ~= player and p.Character then
+                                local tRoot = p.Character:FindFirstChild("HumanoidRootPart")
+                                local tHum = p.Character:FindFirstChild("Humanoid")
+                                if tRoot and tHum and tHum.Health > 0 then
+                                    if (myRoot.Position - tRoot.Position).Magnitude <= 20 then
+                                        if tool then tool:Activate() end
+                                        firetouchinterest(myRoot, tRoot, 0)
+                                        firetouchinterest(myRoot, tRoot, 1)
                                     end
                                 end
                             end
@@ -476,25 +371,30 @@ killAuraButton.MouseButton1Click:Connect(function()
                 end)
             end
         end)
-    else
-        killAuraButton.Text = "KILL AURA: OFF"
-        killAuraButton.BackgroundColor3 = colorOff
-        statusLabel.Text = "Kill Aura desativado."
     end
 end)
 
--- Lógica do Voo
+-- Voo (Fly) Corrigido, Fluido e Estável
 flyButton.MouseButton1Click:Connect(function()
     flyEnabled = not flyEnabled
+    flyButton.Text = flyEnabled and "VOO: ON" or "VOO: OFF"
+    flyButton.BackgroundColor3 = flyEnabled and colorOn or colorOff
+    
     local character = player.Character
-    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
+    if not character or not character:FindFirstChild("HumanoidRootPart") then 
+        flyEnabled = false
+        flyButton.Text = "VOO: OFF"
+        flyButton.BackgroundColor3 = colorOff
+        return 
+    end
+    
     local humanoidRootPart = character.HumanoidRootPart
     local humanoid = character:FindFirstChild("Humanoid")
 
     if flyEnabled then
-        flyButton.Text = "VOO: ON"
-        flyButton.BackgroundColor3 = colorOn
-        
+        if bv then bv:Destroy() end
+        if bg then bg:Destroy() end
+
         bv = Instance.new("BodyVelocity")
         bv.Velocity = Vector3.new(0, 0, 0)
         bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
@@ -510,24 +410,38 @@ flyButton.MouseButton1Click:Connect(function()
         task.spawn(function()
             while flyEnabled and character and humanoidRootPart and humanoidRootPart.Parent do
                 local cam = workspace.CurrentCamera
-                local moveDir = humanoid.MoveDirection
+                local moveDir = humanoid and humanoid.MoveDirection or Vector3.new(0,0,0)
                 local currentFlySpeed = tonumber(speedBox.Text) or 50
-                if bv and bg then
-                    bv.Velocity = (cam.CFrame.LookVector * (moveDir.Z * -currentFlySpeed)) + 
-                                  (cam.CFrame.RightVector * (moveDir.X * currentFlySpeed)) + 
-                                  Vector3.new(0, moveDir.Y * currentFlySpeed, 0)
+                
+                if bv and bg and bv.Parent and bg.Parent then
+                    if moveDir.Magnitude > 0 then
+                        bv.Velocity = (cam.CFrame.LookVector * (moveDir.Z * currentFlySpeed)) + 
+                                      (cam.CFrame.RightVector * (moveDir.X * currentFlySpeed)) + 
+                                      Vector3.new(0, moveDir.Y * currentFlySpeed, 0)
+                    else
+                        bv.Velocity = Vector3.new(0, 0.1, 0)
+                    end
                     bg.CFrame = cam.CFrame
                 end
                 task.wait()
             end
+            
+            if bv then bv:Destroy() end
+            if bg then bg:Destroy() end
+            if humanoid then humanoid.PlatformStand = false end
         end)
-        statusLabel.Text = "Voo ativado!"
     else
-        flyButton.Text = "VOO: OFF"
-        flyButton.BackgroundColor3 = colorOff
         if bv then bv:Destroy() end
         if bg then bg:Destroy() end
         if humanoid then humanoid.PlatformStand = false end
-        statusLabel.Text = "Voo desativado."
     end
+end)
+
+-- Reseta o voo automaticamente se o jogador morrer
+player.CharacterAdded:Connect(function(newChar)
+    flyEnabled = false
+    flyButton.Text = "VOO: OFF"
+    flyButton.BackgroundColor3 = colorOff
+    if bv then bv:Destroy() end
+    if bg then bg:Destroy() end
 end)
