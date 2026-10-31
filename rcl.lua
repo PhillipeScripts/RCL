@@ -1,56 +1,49 @@
--- RCL Script - Versão com Botão de Fechar e Confirmação Restaurados
+-- ==============================================================================
+-- RCL SCRIPT v27.8 - ULTIMATE MOBILE EDITION (FULL SOURCE)
+-- CRIADOR: Pelipe_404
+-- ==============================================================================
+
+local CoreGui = game:GetService("CoreGui")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
-local CoreGui = game:GetService("CoreGui")
 local TeleportService = game:GetService("TeleportService")
 local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
 
 local player = Players.LocalPlayer
 
--- Limpa qualquer versão anterior para evitar conflito
+-- Proteção e Limpeza prévia de instâncias antigas
 pcall(function()
-    if CoreGui:FindFirstChild("RCL_Script_Hub") then CoreGui.RCL_Script_Hub:Destroy() end
-    if CoreGui:FindFirstChild("RCL_FloatingButton") then CoreGui.RCL_FloatingButton:Destroy() end
-    if CoreGui:FindFirstChild("RCL_IntroGui") then CoreGui.RCL_IntroGui:Destroy() end
+    for _, v in ipairs({"RCL_FloatingButton", "RCL_Script_Hub", "RCL_IntroGui"}) do
+        if CoreGui:FindFirstChild(v) then CoreGui[v]:Destroy() end
+    end
 end)
 
-local noclipEnabled = false
-local flyEnabled = false
-local speedEnabled = false
-
-local flySpeed = 50
-local playerSpeed = 16
-local bv, bg
-
--- ==========================================
--- TELA DE INICIALIZAÇÃO (INTRO)
--- ==========================================
-local introGui = Instance.new("ScreenGui")
+-- ==============================================================================
+-- SEÇÃO 1: TELA DE INTRODUÇÃO (VOIDWARE STYLE)
+-- ==============================================================================
+local introGui = Instance.new("ScreenGui", CoreGui)
 introGui.Name = "RCL_IntroGui"
-introGui.Parent = CoreGui
 introGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-local introFrame = Instance.new("Frame")
+local introFrame = Instance.new("Frame", introGui)
 introFrame.Size = UDim2.new(0, 320, 0, 180)
 introFrame.Position = UDim2.new(0.5, -160, 0.5, -90)
 introFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
 introFrame.BorderSizePixel = 0
-introFrame.Parent = introGui
-
 Instance.new("UICorner", introFrame).CornerRadius = UDim.new(0, 12)
-local introStroke = Instance.new("UIStroke")
+
+local introStroke = Instance.new("UIStroke", introFrame)
 introStroke.Color = Color3.fromRGB(80, 80, 120)
 introStroke.Thickness = 1.5
-introStroke.Parent = introFrame
 
-local introLogo = Instance.new("ImageLabel")
+local introLogo = Instance.new("ImageLabel", introFrame)
 introLogo.Size = UDim2.new(0, 50, 0, 50)
 introLogo.Position = UDim2.new(0.5, -25, 0, 20)
 introLogo.BackgroundTransparency = 1
 introLogo.Image = "rbxassetid://82176801785735"
-introLogo.Parent = introFrame
 
-local introTitle = Instance.new("TextLabel")
+local introTitle = Instance.new("TextLabel", introFrame)
 introTitle.Size = UDim2.new(1, 0, 0, 30)
 introTitle.Position = UDim2.new(0, 0, 0, 75)
 introTitle.Text = "RCL Script"
@@ -58,145 +51,74 @@ introTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
 introTitle.TextSize = 18
 introTitle.Font = Enum.Font.GothamBold
 introTitle.BackgroundTransparency = 1
-introTitle.Parent = introFrame
 
-local barBackground = Instance.new("Frame")
-barBackground.Size = UDim2.new(0, 260, 0, 6)
-barBackground.Position = UDim2.new(0.5, -130, 0, 125)
-barBackground.BackgroundColor3 = Color3.fromRGB(30, 30, 50)
-barBackground.BorderSizePixel = 0
-barBackground.Parent = introFrame
-Instance.new("UICorner", barBackground).CornerRadius = UDim.new(1, 0)
+local barBg = Instance.new("Frame", introFrame)
+barBg.Size = UDim2.new(0, 260, 0, 6)
+barBg.Position = UDim2.new(0.5, -130, 0, 125)
+barBg.BackgroundColor3 = Color3.fromRGB(30, 30, 50)
+barBg.BorderSizePixel = 0
+Instance.new("UICorner", barBg).CornerRadius = UDim.new(1, 0)
 
-local barFill = Instance.new("Frame")
+local barFill = Instance.new("Frame", barBg)
 barFill.Size = UDim2.new(0, 0, 1, 0)
 barFill.BackgroundColor3 = Color3.fromRGB(90, 120, 255)
 barFill.BorderSizePixel = 0
-barFill.Parent = barBackground
 Instance.new("UICorner", barFill).CornerRadius = UDim.new(1, 0)
 
-local statusText = Instance.new("TextLabel")
-statusText.Size = UDim2.new(1, 0, 0, 20)
-statusText.Position = UDim2.new(0, 0, 0, 142)
-statusText.Text = "Iniciando sistemas..."
-statusText.TextColor3 = Color3.fromRGB(150, 150, 180)
-statusText.TextSize = 11
-statusText.Font = Enum.Font.Gotham
-statusText.BackgroundTransparency = 1
-statusText.Parent = introFrame
+local statusLbl = Instance.new("TextLabel", introFrame)
+statusLbl.Size = UDim2.new(1, 0, 0, 20)
+statusLbl.Position = UDim2.new(0, 0, 0, 142)
+statusLbl.Text = "Iniciando sistemas..."
+statusLbl.TextColor3 = Color3.fromRGB(150, 150, 180)
+statusLbl.TextSize = 11
+statusLbl.Font = Enum.Font.Gotham
+statusLbl.BackgroundTransparency = 1
 
--- ==========================================
--- BOTÃO FLUTUANTE
--- ==========================================
-local floatGui = Instance.new("ScreenGui")
-floatGui.Name = "RCL_FloatingButton"
-floatGui.Parent = CoreGui
-floatGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-floatGui.Enabled = false
-
-local floatBtn = Instance.new("ImageButton")
-floatBtn.Size = UDim2.new(0, 50, 0, 50)
-floatBtn.Position = UDim2.new(0, 50, 0.4, 0)
-floatBtn.BackgroundColor3 = Color3.fromRGB(20, 20, 32)
-floatBtn.Image = "rbxassetid://82176801785735"
-floatBtn.Active = true
-floatBtn.Parent = floatGui
-
-Instance.new("UICorner", floatBtn).CornerRadius = UDim.new(1, 0)
-local floatStroke = Instance.new("UIStroke")
-floatStroke.Color = Color3.fromRGB(80, 80, 120)
-floatStroke.Thickness = 2
-floatStroke.Parent = floatBtn
-
-local dragging = false
-local dragInput, dragStart, startPos
-
-floatBtn.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-        dragging = true
-        dragStart = input.Position
-        startPos = floatBtn.Position
-        input.Changed:Connect(function()
-            if input.UserInputState == Enum.UserInputState.End then dragging = false end
-        end)
-    end
-end)
-
-floatBtn.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
-        dragInput = input
-    end
-end)
-
-UserInputService.InputChanged:Connect(function(input)
-    if dragging and input == dragInput then
-        local delta = input.Position - dragStart
-        floatBtn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-end)
-
--- ==========================================
--- INTERFACE PRINCIPAL DO HUB
--- ==========================================
-local screenGui = Instance.new("ScreenGui")
+-- ==============================================================================
+-- SEÇÃO 2: PAINEL PRINCIPAL DO HUB (ESTRUTURA COMPLETA)
+-- ==============================================================================
+local screenGui = Instance.new("ScreenGui", CoreGui)
 screenGui.Name = "RCL_Script_Hub"
-screenGui.Parent = CoreGui
 screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 screenGui.Enabled = false
 
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 540, 0, 360)
-mainFrame.Position = UDim2.new(0.5, -270, 0.4, -180)
-mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 32)
-mainFrame.BorderSizePixel = 0
-mainFrame.Active = true
-mainFrame.Draggable = true
-mainFrame.Parent = screenGui
+local main = Instance.new("Frame", screenGui)
+main.Size = UDim2.new(0, 540, 0, 360)
+main.Position = UDim2.new(0.5, -270, 0.4, -180)
+main.BackgroundColor3 = Color3.fromRGB(20, 20, 32)
+main.BorderSizePixel = 0
+main.Active = true
+main.Draggable = true
+Instance.new("UICorner", main).CornerRadius = UDim.new(0, 12)
 
-Instance.new("UICorner", mainFrame).CornerRadius = UDim.new(0, 12)
-local mainStroke = Instance.new("UIStroke")
-mainStroke.Color = Color3.fromRGB(60, 60, 90)
-mainStroke.Thickness = 1
-mainStroke.Parent = mainFrame
+local minimized = false
 
-floatBtn.MouseButton1Click:Connect(function()
-    if not dragging then
-        screenGui.Enabled = not screenGui.Enabled
-    end
-end)
+-- Confirmação de fecho
+local confOv = Instance.new("Frame", main)
+confOv.Size = UDim2.new(1, 0, 1, 0)
+confOv.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+confOv.BackgroundTransparency = 0.5
+confOv.Visible = false
+confOv.ZIndex = 15
 
--- ==========================================
--- SISTEMA DE CONFIRMAÇÃO DE FECHO
--- ==========================================
-local confirmOverlay = Instance.new("Frame")
-confirmOverlay.Size = UDim2.new(1, 0, 1, 0)
-confirmOverlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-confirmOverlay.BackgroundTransparency = 0.5
-confirmOverlay.Visible = false
-confirmOverlay.ZIndex = 15 -- Fica por cima de tudo no hub
-confirmOverlay.Parent = mainFrame
+local confBox = Instance.new("Frame", confOv)
+confBox.Size = UDim2.new(0, 280, 0, 130)
+confBox.Position = UDim2.new(0.5, -140, 0.5, -65)
+confBox.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
+confBox.ZIndex = 16
+Instance.new("UICorner", confBox).CornerRadius = UDim.new(0, 10)
 
-local confirmBox = Instance.new("Frame")
-confirmBox.Size = UDim2.new(0, 280, 0, 130)
-confirmBox.Position = UDim2.new(0.5, -140, 0.5, -65)
-confirmBox.BackgroundColor3 = Color3.fromRGB(25, 25, 40)
-confirmBox.BorderSizePixel = 0
-confirmBox.ZIndex = 16
-confirmBox.Parent = confirmOverlay
-Instance.new("UICorner", confirmBox).CornerRadius = UDim.new(0, 10)
+local confTxt = Instance.new("TextLabel", confBox)
+confTxt.Size = UDim2.new(1, 0, 0, 50)
+confTxt.Position = UDim2.new(0, 0, 0, 15)
+confTxt.Text = "Quer Fechar O Hub?"
+confTxt.TextColor3 = Color3.fromRGB(255, 255, 255)
+confTxt.TextSize = 15
+confTxt.Font = Enum.Font.GothamBold
+confTxt.BackgroundTransparency = 1
+confTxt.ZIndex = 16
 
-local confirmText = Instance.new("TextLabel")
-confirmText.Size = UDim2.new(1, 0, 0, 50)
-confirmText.Position = UDim2.new(0, 0, 0, 15)
-confirmText.Text = "Quer Fechar O Hub?"
-confirmText.TextColor3 = Color3.fromRGB(255, 255, 255)
-confirmText.TextSize = 15
-confirmText.Font = Enum.Font.GothamBold
-confirmText.BackgroundTransparency = 1
-confirmText.ZIndex = 16
-confirmText.Parent = confirmBox
-
-local yesBtn = Instance.new("TextButton")
+local yesBtn = Instance.new("TextButton", confBox)
 yesBtn.Size = UDim2.new(0, 110, 0, 32)
 yesBtn.Position = UDim2.new(0, 20, 0, 75)
 yesBtn.Text = "Sim"
@@ -205,10 +127,9 @@ yesBtn.TextSize = 13
 yesBtn.Font = Enum.Font.GothamBold
 yesBtn.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
 yesBtn.ZIndex = 16
-yesBtn.Parent = confirmBox
 Instance.new("UICorner", yesBtn).CornerRadius = UDim.new(0, 6)
 
-local noBtn = Instance.new("TextButton")
+local noBtn = Instance.new("TextButton", confBox)
 noBtn.Size = UDim2.new(0, 110, 0, 32)
 noBtn.Position = UDim2.new(1, -130, 0, 75)
 noBtn.Text = "Não"
@@ -217,412 +138,383 @@ noBtn.TextSize = 13
 noBtn.Font = Enum.Font.GothamBold
 noBtn.BackgroundColor3 = Color3.fromRGB(50, 120, 70)
 noBtn.ZIndex = 16
-noBtn.Parent = confirmBox
 Instance.new("UICorner", noBtn).CornerRadius = UDim.new(0, 6)
 
--- Botão de Fechar Principal (X)
-local closeButton = Instance.new("TextButton")
-closeButton.Size = UDim2.new(0, 26, 0, 26)
-closeButton.Position = UDim2.new(1, -34, 0, 12)
-closeButton.Text = "✕"
-closeButton.TextColor3 = Color3.fromRGB(200, 200, 200)
-closeButton.TextSize = 13
-closeButton.Font = Enum.Font.GothamBold
-closeButton.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
-closeButton.ZIndex = 10
-closeButton.Parent = mainFrame
-Instance.new("UICorner", closeButton).CornerRadius = UDim.new(0, 6)
+local closeBtn = Instance.new("TextButton", main)
+closeBtn.Size = UDim2.new(0, 26, 0, 26)
+closeBtn.Position = UDim2.new(1, -34, 0, 12)
+closeBtn.Text = "✕"
+closeBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.TextSize = 13
+closeBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
+closeBtn.ZIndex = 10
+Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 6)
 
--- Ações dos botões de fecho
-closeButton.MouseButton1Click:Connect(function()
-    confirmOverlay.Visible = true
-end)
+local minBtn = Instance.new("TextButton", main)
+minBtn.Size = UDim2.new(0, 26, 0, 26)
+minBtn.Position = UDim2.new(1, -66, 0, 12)
+minBtn.Text = "-"
+minBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+minBtn.Font = Enum.Font.GothamBold
+minBtn.TextSize = 13
+minBtn.BackgroundColor3 = Color3.fromRGB(35, 35, 55)
+minBtn.ZIndex = 10
+Instance.new("UICorner", minBtn).CornerRadius = UDim.new(0, 6)
 
-noBtn.MouseButton1Click:Connect(function()
-    confirmOverlay.Visible = false
-end)
+closeBtn.MouseButton1Click:Connect(function() confOv.Visible = true end)
+noBtn.MouseButton1Click:Connect(function() confOv.Visible = false end)
+yesBtn.MouseButton1Click:Connect(function() screenGui:Destroy() if CoreGui:FindFirstChild("RCL_FloatingButton") then CoreGui.RCL_FloatingButton:Destroy() end end)
 
-yesBtn.MouseButton1Click:Connect(function()
-    screenGui:Destroy()
-    floatGui:Destroy()
-end)
-
--- Barra Lateral
-local sidebar = Instance.new("Frame")
+-- Barra Lateral & Logótipo
+local sidebar = Instance.new("Frame", main)
 sidebar.Size = UDim2.new(0, 170, 1, 0)
 sidebar.BackgroundColor3 = Color3.fromRGB(15, 15, 25)
-sidebar.BorderSizePixel = 0
-sidebar.Parent = mainFrame
 Instance.new("UICorner", sidebar).CornerRadius = UDim.new(0, 12)
 
-local logoImage = Instance.new("ImageLabel")
-logoImage.Size = UDim2.new(0, 36, 0, 36)
-logoImage.Position = UDim2.new(0, 15, 0, 12)
-logoImage.BackgroundTransparency = 1
-logoImage.Image = "rbxassetid://82176801785735"
-logoImage.Parent = sidebar
+local lImg = Instance.new("ImageLabel", sidebar)
+lImg.Size = UDim2.new(0, 36, 0, 36)
+lImg.Position = UDim2.new(0, 15, 0, 12)
+lImg.BackgroundTransparency = 1
+lImg.Image = "rbxassetid://82176801785735"
 
-local logoLabel = Instance.new("TextLabel")
-logoLabel.Size = UDim2.new(1, -60, 0, 45)
-logoLabel.Position = UDim2.new(0, 58, 0, 12)
-logoLabel.Text = "RCL Script"
-logoLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-logoLabel.TextSize = 18
-logoLabel.Font = Enum.Font.GothamBold
-logoLabel.BackgroundTransparency = 1
-logoLabel.Parent = sidebar
+local lLbl = Instance.new("TextLabel", sidebar)
+lLbl.Size = UDim2.new(1, -60, 0, 45)
+lLbl.Position = UDim2.new(0, 58, 0, 12)
+lLbl.Text = "RCL Script"
+lLbl.TextColor3 = Color3.fromRGB(255, 255, 255)
+lLbl.Font = Enum.Font.GothamBold
+lLbl.TextSize = 18
+lLbl.BackgroundTransparency = 1
+lLbl.TextXAlignment = Enum.TextXAlignment.Left
 
-local subLogo = Instance.new("TextLabel")
-subLogo.Size = UDim2.new(1, -15, 0, 20)
-subLogo.Position = UDim2.new(0, 15, 0, 54)
-subLogo.Text = "Painel Oficial"
-subLogo.TextColor3 = Color3.fromRGB(130, 130, 160)
-subLogo.TextSize = 10
-subLogo.Font = Enum.Font.Gotham
-subLogo.BackgroundTransparency = 1
-subLogo.Parent = sidebar
+-- Contador de FPS
+local fpsLbl = Instance.new("TextLabel", main)
+fpsLbl.Size = UDim2.new(0, 120, 0, 20)
+fpsLbl.Position = UDim2.new(0, 185, 0, 15)
+fpsLbl.Text = "FPS: 60"
+fpsLbl.TextColor3 = Color3.fromRGB(46, 204, 113)
+fpsLbl.Font = Enum.Font.GothamBold
+fpsLbl.TextSize = 13
+fpsLbl.BackgroundTransparency = 1
 
--- Contedores de Abas
-local function createTabContainer()
-    local container = Instance.new("ScrollingFrame")
-    container.Size = UDim2.new(1, -185, 1, -65)
-    container.Position = UDim2.new(0, 180, 0, 55)
-    container.BackgroundTransparency = 1
-    container.BorderSizePixel = 0
-    container.CanvasSize = UDim2.new(0, 0, 0, 400)
-    container.ScrollBarThickness = 4
-    container.Visible = false
-    container.Parent = mainFrame
-
-    local layout = Instance.new("UIListLayout")
-    layout.SortOrder = Enum.SortOrder.LayoutOrder
-    layout.Padding = UDim.new(0, 8)
-    layout.Parent = container
-    return container
-end
-
-local tabContainer1 = createTabContainer()
-tabContainer1.Visible = true
-local tabContainer2 = createTabContainer()
-local tabContainer3 = createTabContainer()
-
-local tabContainer4 = Instance.new("Frame")
-tabContainer4.Size = UDim2.new(1, -185, 1, -65)
-tabContainer4.Position = UDim2.new(0, 180, 0, 55)
-tabContainer4.BackgroundTransparency = 1
-tabContainer4.BorderSizePixel = 0
-tabContainer4.Visible = false
-tabContainer4.Parent = mainFrame
-
-local function createTabButton(text, yPos)
-    local btn = Instance.new("TextButton")
-    btn.Size = UDim2.new(1, -20, 0, 30)
-    btn.Position = UDim2.new(0, 10, 0, yPos)
-    btn.Text = text
-    btn.TextColor3 = Color3.fromRGB(170, 170, 200)
-    btn.TextSize, btn.Font = 12, Enum.Font.GothamMedium
-    btn.TextXAlignment = Enum.TextXAlignment.Left
-    btn.BackgroundColor3 = Color3.fromRGB(20, 20, 32)
-    btn.Parent = sidebar
-    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 8)
-    return btn
-end
-
-local tab1Btn = createTabButton("   🏠 Início", 82)
-local tab2Btn = createTabButton("   👤 Player", 116)
-local tab3Btn = createTabButton("   🌐 Teleporte", 150)
-local tab4Btn = createTabButton("   📜 Scripts", 184)
-
-tab1Btn.BackgroundColor3 = Color3.fromRGB(45, 45, 70)
-tab1Btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-tab1Btn.Font = Enum.Font.GothamBold
-
-local function selectTab(activeContainer, activeBtn)
-    tabContainer1.Visible = (activeContainer == tabContainer1)
-    tabContainer2.Visible = (activeContainer == tabContainer2)
-    tabContainer3.Visible = (activeContainer == tabContainer3)
-    tabContainer4.Visible = (activeContainer == tabContainer4)
-
-    for _, btn in ipairs({tab1Btn, tab2Btn, tab3Btn, tab4Btn}) do
-        btn.BackgroundColor3 = Color3.fromRGB(20, 20, 32)
-        btn.TextColor3 = Color3.fromRGB(170, 170, 200)
-        btn.Font = Enum.Font.GothamMedium
-    end
-    activeBtn.BackgroundColor3 = Color3.fromRGB(45, 45, 70)
-    activeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    activeBtn.Font = Enum.Font.GothamBold
-end
-
-tab1Btn.MouseButton1Click:Connect(function() selectTab(tabContainer1, tab1Btn) end)
-tab2Btn.MouseButton1Click:Connect(function() selectTab(tabContainer2, tab2Btn) end)
-tab3Btn.MouseButton1Click:Connect(function() selectTab(tabContainer3, tab3Btn) end)
-tab4Btn.MouseButton1Click:Connect(function() selectTab(tabContainer4, tab4Btn) end)
-
-local function createOptionRow(parentContainer, text, customWidget)
-    local row = Instance.new("Frame")
-    row.Size = UDim2.new(1, -10, 0, 42)
-    row.BackgroundColor3 = Color3.fromRGB(28, 28, 45)
-    row.BorderSizePixel = 0
-    row.Parent = parentContainer
-    Instance.new("UICorner", row).CornerRadius = UDim.new(0, 8)
-
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, -120, 1, 0)
-    label.Position = UDim2.new(0, 15, 0, 0)
-    label.Text = text
-    label.TextColor3 = Color3.fromRGB(230, 230, 255)
-    label.TextSize = 13
-    label.Font = Enum.Font.GothamMedium
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.BackgroundTransparency = 1
-    label.Parent = row
-
-    if customWidget then
-        customWidget.Position = UDim2.new(1, -115, 0.5, -15)
-        customWidget.Parent = row
-    end
-    return row
-end
-
--- ==========================================
--- ITENS DA ABA 1 (INÍCIO)
--- ==========================================
-local function createInfoCard(parent, title, value)
-    local card = Instance.new("Frame")
-    card.Size = UDim2.new(1, -10, 0, 42)
-    card.BackgroundColor3 = Color3.fromRGB(28, 28, 45)
-    card.BorderSizePixel = 0
-    card.Parent = parent
-    Instance.new("UICorner", card).CornerRadius = UDim.new(0, 8)
-
-    local lblTitle = Instance.new("TextLabel")
-    lblTitle.Size = UDim2.new(0, 120, 1, 0)
-    lblTitle.Position = UDim2.new(0, 15, 0, 0)
-    lblTitle.Text = title
-    lblTitle.TextColor3 = Color3.fromRGB(180, 180, 210)
-    lblTitle.TextSize = 13
-    lblTitle.Font = Enum.Font.GothamMedium
-    lblTitle.TextXAlignment = Enum.TextXAlignment.Left
-    lblTitle.BackgroundTransparency = 1
-    lblTitle.Parent = card
-
-    local lblValue = Instance.new("TextLabel")
-    lblValue.Size = UDim2.new(1, -140, 1, 0)
-    lblValue.Position = UDim2.new(0, 130, 0, 0)
-    lblValue.Text = value
-    lblValue.TextColor3 = Color3.fromRGB(255, 255, 255)
-    lblValue.TextSize = 13
-    lblValue.Font = Enum.Font.GothamBold
-    lblValue.TextXAlignment = Enum.TextXAlignment.Right
-    lblValue.BackgroundTransparency = 1
-    lblValue.Parent = card
-end
-
-createInfoCard(tabContainer1, "Nome do Hub", "RCL Script")
-createInfoCard(tabContainer1, "Versão Atual", "v26.6")
-createInfoCard(tabContainer1, "Criador / Dono", "Pelipe_404")
-createInfoCard(tabContainer1, "Estado", "Ativo & Protegido")
-
--- ==========================================
--- ITENS DA ABA 2 (PLAYER)
--- ==========================================
-local noclipToggle = Instance.new("TextButton")
-noclipToggle.Size = UDim2.new(0, 100, 0, 30)
-noclipToggle.Text = "OFF"
-noclipToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-noclipToggle.TextSize = 12
-noclipToggle.Font = Enum.Font.GothamBold
-noclipToggle.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
-Instance.new("UICorner", noclipToggle).CornerRadius = UDim.new(0, 6)
-createOptionRow(tabContainer2, "Atravessar Paredes (Noclip)", noclipToggle)
-
-noclipToggle.MouseButton1Click:Connect(function()
-    noclipEnabled = not noclipEnabled
-    noclipToggle.Text = noclipEnabled and "ON" or "OFF"
-    noclipToggle.BackgroundColor3 = noclipEnabled and Color3.fromRGB(46, 204, 113) or Color3.fromRGB(180, 40, 40)
-end)
-
-RunService.Stepped:Connect(function()
-    if noclipEnabled and player.Character then
-        for _, part in ipairs(player.Character:GetDescendants()) do
-            if part:IsA("BasePart") and part.CanCollide then
-                part.CanCollide = false
+local fc, currentFPS = 0, 60
+RunService.RenderStepped:Connect(function() fc = fc + 1 end)
+task.spawn(function()
+    while task.wait(1) do
+        if fpsLbl and fpsLbl.Parent then
+            currentFPS = fc
+            fpsLbl.Text = "FPS: " .. tostring(currentFPS)
+            if minimized then
+                lLbl.Text = "RCL Script [v27.8]  |  FPS: " .. tostring(currentFPS)
             end
+            fc = 0
         end
     end
 end)
 
-local speedToggle = Instance.new("TextButton")
-speedToggle.Size = UDim2.new(0, 100, 0, 30)
-speedToggle.Text = "OFF"
-speedToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-speedToggle.TextSize = 12
-speedToggle.Font = Enum.Font.GothamBold
-speedToggle.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
-Instance.new("UICorner", speedToggle).CornerRadius = UDim.new(0, 6)
-createOptionRow(tabContainer2, "Velocidade Customizada", speedToggle)
-
-speedToggle.MouseButton1Click:Connect(function()
-    speedEnabled = not speedEnabled
-    speedToggle.Text = speedEnabled and "ON" or "OFF"
-    speedToggle.BackgroundColor3 = speedEnabled and Color3.fromRGB(46, 204, 113) or Color3.fromRGB(180, 40, 40)
-end)
-
-RunService.RenderStepped:Connect(function()
-    if speedEnabled and player.Character and player.Character:FindFirstChild("Humanoid") then
-        player.Character.Humanoid.WalkSpeed = playerSpeed
+-- Sistema de Minimizar Perfeito
+local tabButtons, tabsList = {}, {}
+minBtn.MouseButton1Click:Connect(function()
+    minimized = not minimized
+    if minimized then
+        minBtn.Text = "+"
+        main.Size = UDim2.new(0, 540, 0, 50)
+        fpsLbl.Visible = false
+        confOv.Visible = false
+        closeBtn.Visible = false
+        minBtn.Position = UDim2.new(1, -36, 0.5, -13)
+        sidebar.Size = UDim2.new(1, 0, 1, 0)
+        lImg.Position = UDim2.new(0, 12, 0, 11)
+        lImg.Size = UDim2.new(0, 28, 0, 28)
+        lLbl.Size = UDim2.new(1, -120, 1, 0)
+        lLbl.Position = UDim2.new(0, 45, 0, 0)
+        lLbl.Text = "RCL Script [v27.8]  |  FPS: " .. tostring(currentFPS)
+        for _, btn in ipairs(tabButtons) do btn.Visible = false end
+        for _, t in ipairs(tabsList) do t.Visible = false end
+    else
+        minBtn.Text = "-"
+        main.Size = UDim2.new(0, 540, 0, 360)
+        sidebar.Size = UDim2.new(0, 170, 1, 0)
+        fpsLbl.Visible = true
+        lImg.Position = UDim2.new(0, 15, 0, 12)
+        lImg.Size = UDim2.new(0, 36, 0, 36)
+        lLbl.Size = UDim2.new(1, -60, 0, 45)
+        lLbl.Position = UDim2.new(0, 58, 0, 12)
+        lLbl.Text = "RCL Script"
+        closeBtn.Visible = true
+        minBtn.Position = UDim2.new(1, -66, 0, 12)
+        for _, btn in ipairs(tabButtons) do btn.Visible = true end
+        tabsList[1].Visible = true
     end
 end)
 
-local flyToggle = Instance.new("TextButton")
-flyToggle.Size = UDim2.new(0, 100, 0, 30)
-flyToggle.Text = "OFF"
-flyToggle.TextColor3 = Color3.fromRGB(255, 255, 255)
-flyToggle.TextSize = 12
-flyToggle.Font = Enum.Font.GothamBold
-flyToggle.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
-Instance.new("UICorner", flyToggle).CornerRadius = UDim.new(0, 6)
-createOptionRow(tabContainer2, "Modo Voo (Fly)", flyToggle)
+-- Construtor de Abas
+local function createTab()
+    local c = Instance.new("ScrollingFrame", main)
+    c.Size = UDim2.new(1, -185, 1, -65)
+    c.Position = UDim2.new(0, 180, 0, 55)
+    c.BackgroundTransparency = 1
+    c.CanvasSize = UDim2.new(0, 0, 0, 350)
+    c.ScrollBarThickness = 4
+    c.Visible = false
+    local l = Instance.new("UIListLayout", c)
+    l.SortOrder = Enum.SortOrder.LayoutOrder
+    l.Padding = UDim.new(0, 8)
+    table.insert(tabsList, c)
+    return c
+end
 
-flyToggle.MouseButton1Click:Connect(function()
+local t1 = createTab() -- Início
+local t2 = createTab() -- Player
+local t3 = createTab() -- Teleporte
+local t4 = createTab() -- Scripts
+t1.Visible = true
+
+local function createTabBtn(txt, y, targetTab)
+    local b = Instance.new("TextButton", sidebar)
+    b.Size = UDim2.new(1, -20, 0, 30)
+    b.Position = UDim2.new(0, 10, 0, y)
+    b.Text = txt
+    b.TextColor3 = Color3.fromRGB(170, 170, 200)
+    b.Font = Enum.Font.GothamMedium
+    b.TextSize = 12
+    b.TextXAlignment = Enum.TextXAlignment.Left
+    b.BackgroundColor3 = Color3.fromRGB(20, 20, 32)
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
+    table.insert(tabButtons, b)
+
+    b.MouseButton1Click:Connect(function()
+        if minimized then return end
+        t1.Visible = (targetTab == t1)
+        t2.Visible = (targetTab == t2)
+        t3.Visible = (targetTab == t3)
+        t4.Visible = (targetTab == t4)
+        for _, btn in ipairs(tabButtons) do
+            btn.BackgroundColor3 = Color3.fromRGB(20, 20, 32)
+            btn.TextColor3 = Color3.fromRGB(170, 170, 200)
+            btn.Font = Enum.Font.GothamMedium
+        end
+        b.BackgroundColor3 = Color3.fromRGB(45, 45, 70)
+        b.TextColor3 = Color3.fromRGB(255, 255, 255)
+        b.Font = Enum.Font.GothamBold
+    end)
+    return b
+end
+
+local b1 = createTabBtn("   🏠 Início", 82, t1)
+b1.BackgroundColor3 = Color3.fromRGB(45, 45, 70)
+b1.TextColor3 = Color3.fromRGB(255, 255, 255)
+b1.Font = Enum.Font.GothamBold
+createTabBtn("   👤 Player", 116, t2)
+createTabBtn("   🌐 Teleporte", 150, t3)
+createTabBtn("   📜 Scripts", 184, t4)
+
+local function addRow(parent, text, widget)
+    local r = Instance.new("Frame", parent)
+    r.Size = UDim2.new(1, -10, 0, 42)
+    r.BackgroundColor3 = Color3.fromRGB(28, 28, 45)
+    Instance.new("UICorner", r).CornerRadius = UDim.new(0, 8)
+    local l = Instance.new("TextLabel", r)
+    l.Size = UDim2.new(1, -120, 1, 0)
+    l.Position = UDim2.new(0, 15, 0, 0)
+    l.Text = text
+    l.TextColor3 = Color3.fromRGB(230, 230, 255)
+    l.Font = Enum.Font.GothamMedium
+    l.TextSize = 13
+    l.BackgroundTransparency = 1
+    l.TextXAlignment = Enum.TextXAlignment.Left
+    if widget then
+        widget.Position = UDim2.new(1, -115, 0.5, -15)
+        widget.Parent = r
+    end
+end
+
+-- ==============================================================================
+-- SEÇÃO 3: CONTEÚDO DAS ABAS (EXPLOITS E OPÇÕES)
+-- ==============================================================================
+
+-- Aba 1: Início
+local function addInfo(parent, title, val)
+    local r = Instance.new("Frame", parent)
+    r.Size = UDim2.new(1, -10, 0, 42)
+    r.BackgroundColor3 = Color3.fromRGB(28, 28, 45)
+    Instance.new("UICorner", r).CornerRadius = UDim.new(0, 8)
+    local l1 = Instance.new("TextLabel", r)
+    l1.Size = UDim2.new(0, 120, 1, 0)
+    l1.Position = UDim2.new(0, 15, 0, 0)
+    l1.Text = title
+    l1.TextColor3 = Color3.fromRGB(180, 180, 210)
+    l1.Font = Enum.Font.GothamMedium
+    l1.TextSize = 13
+    l1.BackgroundTransparency = 1
+    l1.TextXAlignment = Enum.TextXAlignment.Left
+    local l2 = Instance.new("TextLabel", r)
+    l2.Size = UDim2.new(1, -140, 1, 0)
+    l2.Position = UDim2.new(0, 130, 0, 0)
+    l2.Text = val
+    l2.TextColor3 = Color3.fromRGB(255, 255, 255)
+    l2.Font = Enum.Font.GothamBold
+    l2.TextSize = 13
+    l2.BackgroundTransparency = 1
+    l2.TextXAlignment = Enum.TextXAlignment.Right
+end
+
+addInfo(t1, "Nome do Hub", "RCL Script")
+addInfo(t1, "Versão Atual", "v27.8")
+addInfo(t1, "Criador / Dono", "Pelipe_404")
+addInfo(t1, "Estado", "Ativo & Protegido")
+
+-- Aba 2: Player (Noclip, Fly, Anti-Fling)
+local noclipEnabled, flyEnabled, antiFlingEnabled = false, false, false
+local flySpeed = 50
+local bv, bg
+
+local function makeToggle(txt, parent, callback)
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(0, 100, 0, 30)
+    b.Text = "OFF"
+    b.TextColor3 = Color3.fromRGB(255, 255, 255)
+    b.Font = Enum.Font.GothamBold
+    b.TextSize = 12
+    b.BackgroundColor3 = Color3.fromRGB(180, 40, 40)
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 6)
+    addRow(parent, txt, b)
+    b.MouseButton1Click:Connect(function() callback(b) end)
+    return b
+end
+
+makeToggle("Atravessar Paredes (Noclip)", t2, function(b)
+    noclipEnabled = not noclipEnabled
+    b.Text = noclipEnabled and "ON" or "OFF"
+    b.BackgroundColor3 = noclipEnabled and Color3.fromRGB(46, 204, 113) or Color3.fromRGB(180, 40, 40)
+end)
+RunService.Stepped:Connect(function()
+    if noclipEnabled and player.Character then
+        for _, v in ipairs(player.Character:GetDescendants()) do
+            if v:IsA("BasePart") and v.CanCollide then v.CanCollide = false end
+        end
+    end
+end)
+
+makeToggle("Modo Voo (Fly)", t2, function(b)
     flyEnabled = not flyEnabled
-    flyToggle.Text = flyEnabled and "ON" or "OFF"
-    flyToggle.BackgroundColor3 = flyEnabled and Color3.fromRGB(46, 204, 113) or Color3.fromRGB(180, 40, 40)
-
-    local character = player.Character
-    if not character or not character:FindFirstChild("HumanoidRootPart") then return end
-    local humanoidRootPart = character.HumanoidRootPart
-    local humanoid = character:FindFirstChild("Humanoid")
-
+    b.Text = flyEnabled and "ON" or "OFF"
+    b.BackgroundColor3 = flyEnabled and Color3.fromRGB(46, 204, 113) or Color3.fromRGB(180, 40, 40)
+    local c = player.Character
+    if not c or not c:FindFirstChild("HumanoidRootPart") then return end
+    local hrp, hum = c.HumanoidRootPart, c:FindFirstChild("Humanoid")
     if flyEnabled then
-        bv = Instance.new("BodyVelocity")
-        bv.Velocity = Vector3.new(0, 0, 0)
-        bv.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-        bv.Parent = humanoidRootPart
-        
-        bg = Instance.new("BodyGyro")
-        bg.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-        bg.CFrame = humanoidRootPart.CFrame
-        bg.Parent = humanoidRootPart
-        
-        if humanoid then humanoid.PlatformStand = true end
-        
+        bv = Instance.new("BodyVelocity", hrp) bv.Velocity, bv.MaxForce = Vector3.new(), Vector3.new(math.huge, math.huge, math.huge)
+        bg = Instance.new("BodyGyro", hrp) bg.MaxTorque, bg.CFrame = Vector3.new(math.huge, math.huge, math.huge), hrp.CFrame
+        if hum then hum.PlatformStand = true end
         task.spawn(function()
-            while flyEnabled and character and humanoidRootPart and humanoidRootPart.Parent do
+            while flyEnabled and c and hrp and hrp.Parent do
                 local cam = workspace.CurrentCamera
-                local moveDir = humanoid.MoveDirection
+                local md = hum.MoveDirection
                 if bv and bg then
-                    bv.Velocity = (cam.CFrame.LookVector * (moveDir.Z * -flySpeed)) + 
-                                  (cam.CFrame.RightVector * (moveDir.X * flySpeed)) + 
-                                  Vector3.new(0, moveDir.Y * flySpeed, 0)
+                    bv.Velocity = (cam.CFrame.LookVector * (md.Z * -flySpeed)) + (cam.CFrame.RightVector * (md.X * flySpeed)) + Vector3.new(0, md.Y * flySpeed, 0)
                     bg.CFrame = cam.CFrame
                 end
                 task.wait()
             end
         end)
     else
-        if bv then bv:Destroy() end
-        if bg then bg:Destroy() end
-        if humanoid then humanoid.PlatformStand = false end
+        if bv then bv:Destroy() end if bg then bg:Destroy() end if hum then hum.PlatformStand = false end
     end
 end)
 
--- ==========================================
--- ITENS DA ABA 3 (TELEPORTE)
--- ==========================================
-local spawnBtn = Instance.new("TextButton")
-spawnBtn.Size = UDim2.new(0, 100, 0, 30)
-spawnBtn.Text = "TELEPORTAR"
-spawnBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-spawnBtn.TextSize = 10
-spawnBtn.Font = Enum.Font.GothamBold
-spawnBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 100)
-Instance.new("UICorner", spawnBtn).CornerRadius = UDim.new(0, 6)
-createOptionRow(tabContainer3, "Ir para o Ponto de Spawn", spawnBtn)
-
-spawnBtn.MouseButton1Click:Connect(function()
-    local char = player.Character
-    if char and char:FindFirstChild("HumanoidRootPart") then
-        for _, obj in ipairs(workspace:GetDescendants()) do
-            if obj:IsA("SpawnLocation") then
-                char.HumanoidRootPart.CFrame = obj.CFrame + Vector3.new(0, 3, 0)
-                break
-            end
+makeToggle("Anti-Fling", t2, function(b)
+    antiFlingEnabled = not antiFlingEnabled
+    b.Text = antiFlingEnabled and "ON" or "OFF"
+    b.BackgroundColor3 = antiFlingEnabled and Color3.fromRGB(46, 204, 113) or Color3.fromRGB(180, 40, 40)
+end)
+RunService.Stepped:Connect(function()
+    if antiFlingEnabled and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        local r = player.Character.HumanoidRootPart
+        if r.Velocity.Magnitude > 250 or r.RotVelocity.Magnitude > 250 then
+            r.Velocity, r.RotVelocity = Vector3.new(), Vector3.new()
         end
     end
 end)
 
-local rejoinBtn = Instance.new("TextButton")
-rejoinBtn.Size = UDim2.new(0, 100, 0, 30)
-rejoinBtn.Text = "REENTRAR"
-rejoinBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-rejoinBtn.TextSize = 10
-rejoinBtn.Font = Enum.Font.GothamBold
-rejoinBtn.BackgroundColor3 = Color3.fromRGB(100, 60, 60)
-Instance.new("UICorner", rejoinBtn).CornerRadius = UDim.new(0, 6)
-createOptionRow(tabContainer3, "Reentrar no Servidor Atual", rejoinBtn)
-
-rejoinBtn.MouseButton1Click:Connect(function()
-    if #Players:GetPlayers() <= 1 then
-        player:Kick("Reconectando...")
-        task.wait(1)
-        TeleportService:Teleport(game.PlaceId, player)
-    else
-        TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, player)
+-- Aba 3: Teleporte
+local spBtn = Instance.new("TextButton")
+spBtn.Size = UDim2.new(0, 100, 0, 30)
+spBtn.Text = "TELEPORTAR"
+spBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+spBtn.Font = Enum.Font.GothamBold
+spBtn.TextSize = 10
+spBtn.BackgroundColor3 = Color3.fromRGB(60, 60, 100)
+Instance.new("UICorner", spBtn).CornerRadius = UDim.new(0, 6)
+addRow(t3, "Ir para o Ponto de Spawn", spBtn)
+spBtn.MouseButton1Click:Connect(function()
+    if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+        for _, o in ipairs(workspace:GetDescendants()) do
+            if o:IsA("SpawnLocation") then player.Character.HumanoidRootPart.CFrame = o.CFrame + Vector3.new(0, 3, 0) break end
+        end
     end
 end)
 
--- ==========================================
--- ITENS DA ABA 4 (SCRIPTS)
--- ==========================================
-local function addDirectScriptRow(posY, scriptName, loadstringUrl)
-    local row = Instance.new("Frame")
-    row.Size = UDim2.new(1, -10, 0, 45)
-    row.Position = UDim2.new(0, 0, 0, posY)
-    row.BackgroundColor3 = Color3.fromRGB(28, 28, 45)
-    row.BorderSizePixel = 0
-    row.Parent = tabContainer4
-    Instance.new("UICorner", row).CornerRadius = UDim.new(0, 8)
+local rjBtn = Instance.new("TextButton")
+rjBtn.Size = UDim2.new(0, 100, 0, 30)
+rjBtn.Text = "REENTRAR"
+rjBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+rjBtn.Font = Enum.Font.GothamBold
+rjBtn.TextSize = 10
+rjBtn.BackgroundColor3 = Color3.fromRGB(100, 60, 60)
+Instance.new("UICorner", rjBtn).CornerRadius = UDim.new(0, 6)
+addRow(t3, "Reentrar no Servidor Atual", rjBtn)
+rjBtn.MouseButton1Click:Connect(function()
+    if #Players:GetPlayers() <= 1 then player:Kick("Reconectando...") task.wait(1) TeleportService:Teleport(game.PlaceId, player) else TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, player) end
+end)
 
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, -130, 1, 0)
-    label.Position = UDim2.new(0, 15, 0, 0)
-    label.Text = scriptName
-    label.TextColor3 = Color3.fromRGB(230, 230, 255)
-    label.TextSize = 13
-    label.Font = Enum.Font.GothamBold
-    label.TextXAlignment = Enum.TextXAlignment.Left
-    label.BackgroundTransparency = 1
-    label.Parent = row
-
-    local execBtn = Instance.new("TextButton")
-    execBtn.Size = UDim2.new(0, 100, 0, 30)
-    execBtn.Position = UDim2.new(1, -110, 0.5, -15)
-    execBtn.Text = "EXECUTAR"
-    execBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    execBtn.TextSize = 11
-    execBtn.Font = Enum.Font.GothamBold
-    execBtn.BackgroundColor3 = Color3.fromRGB(50, 120, 70)
-    execBtn.Parent = row
-    Instance.new("UICorner", execBtn).CornerRadius = UDim.new(0, 6)
-
-    execBtn.MouseButton1Click:Connect(function()
-        task.spawn(function()
-            pcall(function()
-                loadstring(game:HttpGet(loadstringUrl))()
-            end)
-        end)
-    end)
+-- Aba 4: Scripts Externos
+local function addScript(name, url)
+    local r = Instance.new("Frame", t4)
+    r.Size = UDim2.new(1, -10, 0, 45)
+    r.BackgroundColor3 = Color3.fromRGB(28, 28, 45)
+    Instance.new("UICorner", r).CornerRadius = UDim.new(0, 8)
+    local l = Instance.new("TextLabel", r)
+    l.Size = UDim2.new(1, -130, 1, 0)
+    l.Position = UDim2.new(0, 15, 0, 0)
+    l.Text = name
+    l.TextColor3 = Color3.fromRGB(230, 230, 255)
+    l.Font = Enum.Font.GothamBold
+    l.TextSize = 13
+    l.BackgroundTransparency = 1
+    l.TextXAlignment = Enum.TextXAlignment.Left
+    local eb = Instance.new("TextButton", r)
+    eb.Size = UDim2.new(0, 100, 0, 30)
+    eb.Position = UDim2.new(1, -110, 0.5, -15)
+    eb.Text = "EXECUTAR"
+    eb.TextColor3 = Color3.fromRGB(255, 255, 255)
+    eb.Font = Enum.Font.GothamBold
+    eb.TextSize = 11
+    eb.BackgroundColor3 = Color3.fromRGB(50, 120, 70)
+    Instance.new("UICorner", eb).CornerRadius = UDim.new(0, 6)
+    eb.MouseButton1Click:Connect(function() task.spawn(function() pcall(function() loadstring(game:HttpGet(url))() end) end) end)
 end
 
-addDirectScriptRow(0,   "Robin Hub",      "https://raw.githubusercontent.com/PhillipeScripts/RCL/main/RobinHub.lua")
-addDirectScriptRow(53,  "Infinite Yield", "https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source")
-addDirectScriptRow(106, "TP Tool",        "https://raw.githubusercontent.com/jLn0nD/TP-Tool/main/tptool.lua")
+addScript("Robin Hub", "https://raw.githubusercontent.com/PhillipeScripts/RCL/main/RobinHub.lua")
+addScript("Infinite Yield", "https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source")
+addScript("TP Tool", "https://raw.githubusercontent.com/jLn0nD/TP-Tool/main/tptool.lua")
 
--- Animação da Intro
+-- ==============================================================================
+-- SEÇÃO 4: FINALIZAÇÃO DA INTRO E BOTÃO FLUTUANTE TÁTIL
+-- ==============================================================================
 task.spawn(function()
-    barFill:TweenSize(UDim2.new(1, 0, 1, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Exponential, 1.5, true)
-    task.wait(1.8)
+    task.wait(0.1)
+    local tween = TweenService:Create(barFill, TweenInfo.new(1.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(1, 0, 1, 0)})
+    tween:Play()
+    tween.Completed:Wait()
+    statusLbl.Text = "Pronto!"
+    task.wait(0.3)
     introGui:Destroy()
-    floatGui.Enabled = true
-end)
+
+    local floatGui = Instance.new("ScreenGui", CoreGui)
+    floatGui.Name = "RCL_FloatingButton"
+    floatGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+    local floatBtn = Instance.new("ImageButton", floatGui)
+    float
